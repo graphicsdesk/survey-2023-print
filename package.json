@@ -1,0 +1,22 @@
+{
+  "name": "survey-2023",
+  "version": "1.0.0",
+  "description": "**Class of 2023 survey analysis.**",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spec-journalism/survey-2023.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/spec-journalism/survey-2023/issues"
+  },
+  "homepage": "https://github.com/spec-journalism/survey-2023#readme",
+  "dependencies": {
+    "googleapis": "^39.2.0"
+  }
+}
