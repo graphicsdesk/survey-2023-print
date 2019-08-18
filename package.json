@@ -18,5 +18,8 @@
   "homepage": "https://github.com/spec-journalism/survey-2023#readme",
   "dependencies": {
     "googleapis": "^39.2.0"
+  },
+  "devDependencies": {
+    "@newswire/sheet-to-data": "^1.0.0"
   }
 }

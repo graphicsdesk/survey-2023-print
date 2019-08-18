@@ -1,19 +1,19 @@
 const fs = require('fs');
 const readline = require('readline');
 const { google } = require('googleapis');
+const { sheetToData } = require('@newswire/sheet-to-data');
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
-// The file token.json stores the user's access and refresh tokens, and is
-// created automatically when the authorization flow completes for the first
-// time.
 const TOKEN_PATH = 'token.json';
+
+const SPREADSHEET_ID = '1wZEPssgxJZ_EVIV-caKeYToAGniKakO0HtJA_D9zG5Y';
 
 // Load client secrets from a local file.
 fs.readFile('credentials.json', (err, content) => {
   if (err) return console.log('Error loading client secret file:', err);
   // Authorize a client with credentials, then call the Google Sheets API.
-  authorize(JSON.parse(content), listMajors);
+  authorize(JSON.parse(content), getResponses);
 });
 
 /**
@@ -67,26 +67,29 @@ function getNewToken(oAuth2Client, callback) {
 }
 
 /**
- * Prints the names and majors of students in a sample spreadsheet:
- * @see https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+ * Gets survey responses.
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
-function listMajors(auth) {
-  const sheets = google.sheets({version: 'v4', auth});
-  sheets.spreadsheets.values.get({
-    spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
-    range: 'Class Data!A2:E',
-  }, (err, res) => {
-    if (err) return console.log('The API returned an error: ' + err);
-    const rows = res.data.values;
-    if (rows.length) {
-      console.log('Name, Major:');
-      // Print columns A and E, which correspond to indices 0 and 4.
-      rows.map((row) => {
-        console.log(`${row[0]}, ${row[4]}`);
-      });
-    } else {
-      console.log('No data found.');
-    }
+async function getResponses(auth) {
+  const client = google.sheets({ version: 'v4', auth });
+
+  const results = await sheetToData({
+    spreadsheetId: SPREADSHEET_ID,
+    auth
+  });
+
+  Object.keys(results).forEach(sheetName => {
+    const json = JSON.stringify(results[sheetName]);
+    let filename = null;
+
+    if (sheetName === 'Form Responses 1')
+      filename = '../data/form_responses.json';
+    else if (sheetName === 'question slugs')
+      filename = '../data/question_slugs.json';
+    else
+      console.log('Sheet with name ' + sheetName + ' is not accounted for.');
+
+    if (filename)
+      fs.writeFile(filename, json, 'utf8');
   });
 }
