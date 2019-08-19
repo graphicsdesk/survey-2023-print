@@ -13,7 +13,12 @@ library(jsonlite)
 
 ```{r}
 responses <- fromJSON("../data/form_responses.json")
-
-
+responses %>% 
+  separate(categories, sep = "; ", into = c("category1", "category2", "category3")) %>% 
+  gather(category_num, category, category1:category3) %>% 
+  filter(!is.na(category)) %>% 
+  ggplot(aes(family_income_hours)) +
+  geom_bar() +
+  facet_wrap(~ category)
 ```
 

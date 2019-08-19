@@ -79,15 +79,43 @@ async function getResponses(auth) {
   });
 
   const questionSlugs = results['question slugs'];
-  const responses = results['Form Responses 1'].map(response => {
-    Object.keys(questionSlugs).map(question => {
-      if (question in response && questionSlugs[question] !== undefined) {
-        response[ questionSlugs[question] ] = response[question];
-        delete response[question];
+  let responses = results['Form Responses 1'].map(response => {
+    Object.keys(questionSlugs).map(questionLong => {
+      // replace questions with slugs
+
+      const question = questionSlugs[questionLong];
+      if (questionLong in response && questionSlugs[questionLong] !== undefined) {
+        response[question] = response[questionLong];
+        delete response[questionLong];
       }
+
+      // clean response
+
+      let answer = response[question];
+
+      if (question === 'categories') {
+        if (answer.includes('Brazilian'))
+          answer = 'Hispanic, Latino, or Spanish origin';
+        else if (answer === 'Biracial: White and Black or African American')
+          answer = 'White, Black or African American';
+        else if (answer === 'African' || answer === 'Black or African American, Caribbean')
+          answer = 'Black or African American';
+        else if (answer === 'White, Jewish')
+          answer = 'White';
+
+        // make commas semicolons
+        answer = answer
+          .replace(/Hispanic, Latino, or Spanish origin/g, 'Hispanic')
+          .replace(/,/g, ';')
+          .replace(/Hispanic/g, 'Hispanic, Latino, or Spanish origin');
+      }
+
+      response[question] = answer;
     });
     return response;
-  });
+  })
+
+  /* Write out data */
 
   fs.writeFile(
     process.cwd() + '/data/form_responses.json',
