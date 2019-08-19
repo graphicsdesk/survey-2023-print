@@ -9,6 +9,8 @@ library(tidyverse)
 library(jsonlite)
 
 zip_fips <- read.csv("ZIP-COUNTY-FIPS.csv")
+
+LIKERT_ORDERED <- c("Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree")
 ```
 
 ## Preliminary looks
@@ -19,8 +21,10 @@ responses <- fromJSON("../data/form_responses.json") %>%
   gather(category_num, category, category1:category3) %>% 
   filter(!is.na(category)) %>% 
   mutate(
-    eliminate_loans = factor(eliminate_loans, levels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly agree")),
-    income = factor(income, levels = c("Less than $40K", "$40K to $80K", "$80K to $125K", "$125K to $250K", "$250K to $350K", "$350K to $500K", "Greater than $500K"))
+    eliminate_loans = factor(eliminate_loans, levels = LIKERT_ORDERED),
+    income = factor(income, levels = c("Less than $40K", "$40K to $80K", "$80K to $125K", "$125K to $250K", "$250K to $350K", "$350K to $500K", "Greater than $500K")),
+    net_price = factor(net_price, levels= c("0", "Less than $5K", "$10K to $15K", "$15K to $20K", "$20K to $25K", "$25K to $30K", "$30K to $35K", "$35K to $40K", "$45K to $50K", "$50K to $55K", "$55K to $60K", "$60K to $65K", "$65K to $70K", "$70K to $75K", "More than $75K")),
+    affirmative_action = factor(affirmative_action, levels = LIKERT_ORDERED),
   )
 
 # School by income
@@ -54,5 +58,45 @@ responses_fips %>%
   count() %>% 
   write.csv(file = "fips_counts.csv")  
 ```
+
+## Cross sectional stuff
+
+Students who had 504 plans both before and during high school are largely from public non-magnet, non-charter schools, but only half of students who had 504 plans only during high school are from public non-magnet, non-charter schools.
+```{r}
+responses %>%
+  filter(plan_504 != "Never") %>%
+  ggplot(aes(plan_504, fill = hs_type)) +
+  geom_bar() +
+  coord_flip()
+```
+
+Testing
+```{r}
+responses %>% 
+  gather(key = test, value = test_count, sat_count, act_count) %>%  
+  mutate(test_count = factor(test_count)) %>% 
+  ggplot(aes(income, fill = test_count)) +
+  geom_bar(position = "fill") +
+  coord_flip()
+```
+
+```{r}
+responses %>% 
+  gather(key = test, value = test_count, sat_count, act_count) %>%  
+  filter(test_count == 0) %>% 
+  ggplot(aes(hs_type, fill = income)) +
+  geom_bar() +
+  coord_flip()
+```
+
+
+Affirmative action
+```{r}
+responses %>%
+  ggplot(aes(eliminate_loans, fill = net_price)) +
+  geom_bar() +
+  coord_flip()
+```
+
 
 

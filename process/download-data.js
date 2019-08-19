@@ -102,12 +102,21 @@ async function getResponses(auth) {
           answer = 'Black or African American';
         else if (answer === 'White, Jewish')
           answer = 'White';
+        else if (answer === 'Jew')
+          answer = 'White'; // placeholder for now
 
         // make commas semicolons
         answer = answer
           .replace(/Hispanic, Latino, or Spanish origin/g, 'Hispanic')
           .replace(/,/g, ';')
           .replace(/Hispanic/g, 'Hispanic, Latino, or Spanish origin');
+      }
+
+      if (['affirmative_action', 'free_speech', 'eliminate_loans'].includes(question)) {
+        if (answer.toLowerCase() === 'strongly disagree')
+          answer = 'Disagree';
+        else if (answer.toLowerCase() === 'strongly agree')
+          answer = 'Agree';
       }
 
       response[question] = answer;
