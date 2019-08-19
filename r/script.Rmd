@@ -7,18 +7,52 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(jsonlite)
+
+zip_fips <- read.csv("ZIP-COUNTY-FIPS.csv")
 ```
 
 ## Preliminary looks
 
 ```{r}
-responses <- fromJSON("../data/form_responses.json")
-responses %>% 
+responses <- fromJSON("../data/form_responses.json") %>% 
   separate(categories, sep = "; ", into = c("category1", "category2", "category3")) %>% 
   gather(category_num, category, category1:category3) %>% 
   filter(!is.na(category)) %>% 
-  ggplot(aes(family_income_hours)) +
-  geom_bar() +
-  facet_wrap(~ category)
+  mutate(
+    eliminate_loans = factor(eliminate_loans, levels = c("Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly agree")),
+    income = factor(income, levels = c("Less than $40K", "$40K to $80K", "$80K to $125K", "$125K to $250K", "$250K to $350K", "$350K to $500K", "Greater than $500K"))
+  )
+
+# School by income
+responses %>%
+  ggplot(aes(income, fill = category)) +
+  geom_bar(position = "fill") +
+  coord_flip()
+
+responses %>%
+  ggplot(aes(school, fill = income)) +
+  geom_bar(position = "fill") +
+  coord_flip()
+
+# Loans opinion by income
+responses %>%
+  ggplot(aes(income, fill = eliminate_loans)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("dodgerblue3", "dodgerblue", "gray", "firebrick1", "firebrick")) +
+  coord_flip()
 ```
+
+## Map data export shit
+
+```{r}
+responses_fips <- responses %>% 
+  merge(zip_fips %>% select(ZIP, STCOUNTYFP) %>% rename(zipcode = ZIP), by = "zipcode") %>%
+  rename(fips = STCOUNTYFP)
+
+responses_fips %>% 
+  group_by(fips) %>% 
+  count() %>% 
+  write.csv(file = "fips_counts.csv")  
+```
+
 
