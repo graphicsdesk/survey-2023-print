@@ -78,23 +78,26 @@ async function getResponses(auth) {
     auth
   });
 
-  Object.keys(results).forEach(sheetName => {
-    const json = JSON.stringify(results[sheetName]);
-    let filename = null;
-
-    if (sheetName === 'Form Responses 1')
-      filename = process.cwd() + '/data/form_responses.json';
-    else if (sheetName === 'question slugs')
-      filename = process.cwd() + '/data/question_slugs.json';
-    else
-      console.log('Sheet with name ' + sheetName + ' is not accounted for.');
-
-    if (filename)
-      fs.writeFile(filename, json, 'utf8', err => {
-        if (err)
-          console.error(err);
-        else
-          console.log('[download-data] Successfully wrote ' + filename);
-      });
+  const questionSlugs = results['question slugs'];
+  const responses = results['Form Responses 1'].map(response => {
+    Object.keys(questionSlugs).map(question => {
+      if (question in response && questionSlugs[question] !== undefined) {
+        response[ questionSlugs[question] ] = response[question];
+        delete response[question];
+      }
+    });
+    return response;
   });
+
+  fs.writeFile(
+    process.cwd() + '/data/form_responses.json',
+    JSON.stringify(responses),
+    'utf8',
+    err => {
+      if (err)
+        console.error(err);
+      else
+        console.log('[download-data] Successfully wrote form_responses.json');
+    }
+  );
 }
