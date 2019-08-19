@@ -1,0 +1,19 @@
+---
+title: "script"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(jsonlite)
+```
+
+## Preliminary looks
+
+```{r}
+responses <- fromJSON("../data/form_responses.json")
+
+
+```
+
