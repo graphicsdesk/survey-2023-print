@@ -119,19 +119,39 @@ async function getResponses(auth) {
       response[question] = answer;
     });
     return response;
-  })
+  });
+
+  const WORTH_QUESTION = 'Why or why not? ';
+  let worthIts = '';
+  for (const obj of results['why worth it']) {
+    const response = obj[WORTH_QUESTION];
+    if (response === undefined)
+      break;
+    worthIts += '“' + response.trim() + '” ';
+  }
 
   /* Write out data */
 
-  fs.writeFile(
-    process.cwd() + '/data/form_responses.json',
-    JSON.stringify(responses),
-    'utf8',
-    err => {
-      if (err)
-        console.error(err);
-      else
-        console.log('[download-data] Successfully wrote form_responses.json');
-    }
-  );
+  const writeFile = ({ filename, data }) =>
+    fs.writeFile(
+      process.cwd() + filename,
+      data,
+      'utf8',
+      err => {
+        if (err)
+          console.error(err);
+        else
+          console.log('[download-data] Successfully wrote ' + filename);
+      }
+    );
+
+  writeFile({
+    filename: '/data/form_responses.json',
+    data: JSON.stringify(responses),
+  });
+
+  writeFile({
+    filename: '/data/worth-responses.txt',
+    data: worthIts,
+  });
 }

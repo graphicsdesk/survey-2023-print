@@ -6,4 +6,5 @@ token.json
 maps/*.zip
 *.csv
 data/form_responses.json
+data/worth-responses.txt
 *.shp

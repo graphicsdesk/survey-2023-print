@@ -12,7 +12,10 @@ responses <- fromJSON("../data/form_responses.json") %>%
   mutate(
     income = factor(income, levels = c("Less than $40K", "$40K to $80K", "$80K to $125K", "$125K to $250K", "$250K to $350K", "$350K to $500K", "Greater than $500K")),
     net_price = factor(net_price, levels= c("0", "Less than $5K", "$10K to $15K", "$15K to $20K", "$20K to $25K", "$25K to $30K", "$30K to $35K", "$35K to $40K", "$45K to $50K", "$50K to $55K", "$55K to $60K", "$60K to $65K", "$65K to $70K", "$70K to $75K", "More than $75K")),
-    political_af = factor(political_af, levels = c("Very conservative", "Somewhat conservative", "Somewhat liberal", "Very liberal", "I don't know", "Neither conservative nor liberal"))
+    political_af = factor(political_af, levels = c("Very conservative", "Somewhat conservative", "Somewhat liberal", "Very liberal", "I don't know", "Neither conservative nor liberal")),
+  ) %>% 
+  filter(
+    fossil_fuels_divest != ""
   )
 
 responses_race <- responses %>% 
@@ -48,15 +51,32 @@ responses_race %>%
 ```{r}
 responses_race %>% 
   ggplot(aes(free_speech)) +
-  geom_bar()
+  geom_bar() +
+  coord_flip()
 ```
 
 ## Eliminate loans
 
 ```{r}
 responses_race %>% 
-  ggplot(aes(income, fill = eliminate_loans)) +
-  geom_bar(position = "fill") +
-  coord_flip()
+  ggplot(aes(eliminate_loans)) +
+  geom_bar()
 ```
+
+## Fossil fuels
+
+```{r}
+responses %>% 
+  ggplot(aes(fossil_fuels_divest)) +
+  geom_bar()
+```
+
+## Manhattanville
+
+```{r}
+responses %>% 
+  ggplot(aes(manhattanville)) +
+  geom_bar()
+```
+
 
