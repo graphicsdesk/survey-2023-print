@@ -6,3 +6,4 @@ token.json
 maps/*.zip
 *.csv
 data/form_responses.json
+*.shp
