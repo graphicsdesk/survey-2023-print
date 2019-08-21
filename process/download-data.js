@@ -81,13 +81,12 @@ async function getResponses(auth) {
   const questionSlugs = results['question slugs'];
   let responses = results['Form Responses 1'].map(response => {
     Object.keys(questionSlugs).map(questionLong => {
-      // replace questions with slugs
+      // replace questions with slugs; ignore questions without slugs
 
       const question = questionSlugs[questionLong];
-      if (questionLong in response && questionSlugs[questionLong] !== undefined) {
+      if (questionLong in response && questionSlugs[questionLong] !== undefined)
         response[question] = response[questionLong];
-        delete response[questionLong];
-      }
+      delete response[questionLong];
 
       // clean response
 
@@ -100,10 +99,8 @@ async function getResponses(auth) {
           answer = 'White, Black or African American';
         else if (answer === 'African' || answer === 'Black or African American, Caribbean')
           answer = 'Black or African American';
-        else if (answer === 'White, Jewish')
+        else if (answer === 'White, Jewish' || answer === 'White, Jew' || answer === 'White, Greek')
           answer = 'White';
-        else if (answer === 'Jew')
-          answer = 'White'; // placeholder for now
 
         // make commas semicolons
         answer = answer

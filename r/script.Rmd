@@ -11,22 +11,30 @@ library(jsonlite)
 zip_fips <- read.csv("ZIP-COUNTY-FIPS.csv")
 
 LIKERT_ORDERED <- c("Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree")
-```
-
-## Preliminary looks
-
-```{r}
 responses <- fromJSON("../data/form_responses.json") %>% 
   separate(categories, sep = "; ", into = c("category1", "category2", "category3")) %>% 
   gather(category_num, category, category1:category3) %>% 
-  filter(!is.na(category)) %>% 
+  filter(!is.na(category)) %>%
   mutate(
     eliminate_loans = factor(eliminate_loans, levels = LIKERT_ORDERED),
     income = factor(income, levels = c("Less than $40K", "$40K to $80K", "$80K to $125K", "$125K to $250K", "$250K to $350K", "$350K to $500K", "Greater than $500K")),
     net_price = factor(net_price, levels= c("0", "Less than $5K", "$10K to $15K", "$15K to $20K", "$20K to $25K", "$25K to $30K", "$30K to $35K", "$35K to $40K", "$45K to $50K", "$50K to $55K", "$55K to $60K", "$60K to $65K", "$65K to $70K", "$70K to $75K", "More than $75K")),
     affirmative_action = factor(affirmative_action, levels = LIKERT_ORDERED),
+    political_af = factor(political_af, levels = c("Very conservative", "Somewhat conservative", "Somewhat liberal", "Very liberal", "I don't know", "Neither conservative nor liberal"))
   )
 
+responses_ec <- responses %>% 
+  separate(extracurriculars, sep = ", ", into = c("ec1", "ec2", "ec3", "ec4", "ec5", "ec6", "ec7", "ec8")) %>% 
+  gather(extracurricular_num, extracurricular, ec1:ec8) %>% 
+  filter(!is.na(extracurricular)) %>% 
+  group_by(extracurricular) %>% 
+  filter(n() > 10) %>% 
+  ungroup()
+```
+
+## Preliminary looks
+
+```{r}
 # School by income
 responses %>%
   ggplot(aes(income, fill = category)) +
@@ -89,6 +97,14 @@ responses %>%
   coord_flip()
 ```
 
+Legacy kids
+* much more White kids than Blacks/Hispanics have legacy, and richer 
+```{r}
+responses %>%
+  mutate(legacy = if_else(legacy_degree == "No", "No", "Yes")) %>% 
+  ggplot(aes(legacy, fill = income)) +
+  geom_bar()
+```
 
 Affirmative action
 ```{r}
@@ -98,5 +114,172 @@ responses %>%
   coord_flip()
 ```
 
+Low-income students don't want Greek life.
+```{r}
+extracurriculars %>% 
+  filter(category != "Native Hawaiian or Other Pacific Islander") %>% 
+  ggplot(aes(category, fill = extracurricular)) +
+  geom_bar(position = "fill") + 
+  coord_flip()
+  # facet_wrap(~ category)
+```
+
+## Extracurriculars
+
+Conservatives slightly more likely to join political organizations and student government, liberals much more likely to join social justice/activism and culture or identity groups.
+```{r}
+responses_ec %>%
+  filter(!political_af %in% c("I don't know", "Neither conservative nor liberal")) %>% 
+  filter(!school %in% c("Barnard College", "General Studies")) %>%  # barnard not enough conservatives, gs not enough students
+  filter(income %in% c("Greater than $500K", "$125K to $250K", "Less than $40K")) %>% # only enough conservatives in these buckets
+  mutate(
+    political_af = as.character(political_af),
+    political_af = if_else(political_af == "Very conservative", "Somewhat conservative", political_af),
+    political_af = if_else(political_af == "Very liberal", "Somewhat liberal", political_af),
+  ) %>% 
+  ggplot(aes(income, fill = extracurricular)) +
+  geom_bar(position = "fill") + 
+  coord_flip() +
+  facet_grid(~ political_af, scales = "free")
+```
+
+Club sport participation rises with income
+```{r}
+responses_ec %>%
+  # filter(extracurricular %in% c("Club/Intramural Sports")) %>% 
+  ggplot(aes(income, group = extracurricular, color = extracurricular)) +
+  geom_line(stat = "density") +
+  coord_flip() +
+  facet_grid(hs_type ~.)
+```
+
+Asian
+- Richer = sports, visual and performing arts, 
+
+Hispanic/Latino: Culture/identity interest goes down with in higher income brackets. 
+
+```{r}
+responses_ec %>%
+  filter(!category %in% c("Native Hawaiian or Other Pacific Islander")) %>% 
+  mutate(
+    extracurricular = if_else(extracurricular %in% c("Culture or Identity Groups", "Political Organizations", "Social Justice/Activism"), extracurricular, "Other")
+  ) %>% 
+  ggplot(aes(income, fill = extracurricular)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  facet_grid(category ~.)
+```
+
+
+## Socioeconomic diversity
+
+Asians and Whites are spread out pretty evenly in all income brackets, but Blacks and Hispanics are skewed to low-income.
+
+**More poor students are first generation.**
+```{r}
+responses %>% 
+  filter(!category %in% c("Native Hawaiian or Other Pacific Islander")) %>% 
+  mutate(
+    category = factor(category, levels = c("White", "Asian", "Hispanic, Latino, or Spanish origin", "Black or African American", "American Indian or Alaskan Native", "Middle Eastern or North African"))
+  ) %>% 
+  ggplot(aes(income)) +
+  geom_bar() +
+  facet_grid(~ category) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+  )
+```
+
+Support for affirmative action among Asians and whites peaks don't show too strongly of a trend , but it seems that higher-income students tend to not support affirmative action. But
+```{r}
+responses %>% 
+  group_by(income, category) %>% 
+  filter(n() > 10) %>% 
+  ungroup() %>% 
+  ggplot(aes(income, fill = affirmative_action)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  facet_grid(category ~ .)
+```
+
+
+## Voting
+
+```{r}
+responses %>% 
+  filter(vote_primary != "" && vote_gubernatorial != "" && vote_senate != "" && vote_house != "") %>% 
+  filter(!political_af %in% c("I don't know", "Neither conservative nor liberal")) %>% 
+  mutate(
+    political_af = as.character(political_af),
+    political_af = if_else(political_af == "Very conservative", "Somewhat conservative", political_af),
+    political_af = if_else(political_af == "Very liberal", "Somewhat liberal", political_af),
+  ) %>% 
+  ggplot(aes(income, fill = vote_primary)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  facet_grid(category ~ .)
+```
+
+## College decisions factors
+
+```{r}
+decisions <- responses %>% 
+  gather(decision_factor, decision_priority, starts_with("decision"))
+
+decisions %>% 
+  filter(category %in% c("White", "Hispanic, Latino, or Spanish origin", "Black or African American", "Asian")) %>%
+  # filter(hs_type != "Homeschooled") %>% 
+  ggplot(aes(income, fill = decision_priority)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  facet_grid(category ~ decision_factor)
+```
+
+## Columbia factors
+
+
+
+```{r}
+factors <- responses %>% 
+  gather(factor, factor_priority, starts_with("factor_"))
+
+factors %>% 
+  filter(!factor %in% c("factor_cost", "factor_resources", "factor_core", "factor_abroad", "factor_research", "factor_extracurriculras", "factor_athletics")) %>% 
+  filter(category %in% c("White", "Hispanic, Latino, or Spanish origin", "Black or African American", "Asian")) %>%
+  mutate(
+    factor_priority = if_else(factor_priority == "Strongly negative", "Negative", factor_priority),
+    factor_priority = if_else(factor_priority == "Strongly positive", "Positive", factor_priority),
+    factor_priority = factor(factor_priority, levels = c("Negative", "Indifferent", "Positive"))
+  ) %>% 
+  ggplot(aes(income, fill = factor_priority)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  facet_grid(category ~ factor)
+```
+
+
+```{r}
+factors <- responses %>% 
+  gather(factor, factor_priority, starts_with("factor_"))
+
+factors %>% 
+  filter(factor %in% c("factor_cost", "factor_resources",
+                       #"factor_core", we have a question about this already
+                       "factor_demographics",
+                       "factor_greek",
+                       #"factor_mental_health", we have a question about this already
+                       "factor_social")) %>% 
+  filter(category %in% c("White", "Hispanic, Latino, or Spanish origin", "Black or African American", "Asian")) %>%
+  mutate(
+    factor_priority = if_else(factor_priority == "Strongly negative", "Negative", factor_priority),
+    factor_priority = if_else(factor_priority == "Strongly positive", "Positive", factor_priority),
+    factor_priority = factor(factor_priority, levels = c("Negative", "Indifferent", "Positive"))
+  ) %>% 
+  ggplot(aes(income, fill = factor_priority)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  facet_grid(category ~ factor)
+```
 
 
