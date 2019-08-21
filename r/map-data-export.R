@@ -10,13 +10,10 @@ zip_fips <- read.csv("ZIP-COUNTY-FIPS.csv") %>%
     fips = as.character(fips)
   )
 
-# read responses, merge zipcodes
-responses <- fromJSON("../data/form_responses.json") %>% 
+# read responses, merge zipcodes, export counts
+fromJSON("../data/form_responses.json") %>% 
   merge(zip_fips, by = "zipcode") %>% 
-  select(zipcode, fips)
-
-# export response count by FIPS
-responses %>% 
+  select(zipcode, fips) %>% 
   group_by(fips) %>% 
   count() %>% 
   write.csv(file = "fips_counts.csv") 

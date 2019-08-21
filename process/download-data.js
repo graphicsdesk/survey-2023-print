@@ -109,7 +109,7 @@ async function getResponses(auth) {
           .replace(/Hispanic/g, 'Hispanic, Latino, or Spanish origin');
       }
 
-      if (['affirmative_action', 'free_speech', 'eliminate_loans'].includes(question)) {
+      if (['affirmative_action', 'free_speech', 'eliminate_loans', 'fossil_fuels_divest', 'manhattanville'].includes(question)) {
         if (answer.toLowerCase() === 'strongly disagree')
           answer = 'Disagree';
         else if (answer.toLowerCase() === 'strongly agree')
