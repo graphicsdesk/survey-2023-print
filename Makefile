@@ -7,5 +7,5 @@ data:
 download:
 	node process/download-data.js
 
-maps/UScounties_points.shp:
-	mapshaper maps/UScounties.shp -points -o $@
+maps/tl_2016_us_county_points.shp:
+	mapshaper maps/tl_2016_us_county.shp -points -o $@
