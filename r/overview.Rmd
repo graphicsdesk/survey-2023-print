@@ -7,16 +7,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(jsonlite)
+library(scales)
 
-responses <- fromJSON("../data/form_responses.json") %>% 
-  mutate(
-    income = factor(income, levels = c("Less than $40K", "$40K to $80K", "$80K to $125K", "$125K to $250K", "$250K to $350K", "$350K to $500K", "Greater than $500K")),
-    net_price = factor(net_price, levels= c("0", "Less than $5K", "$10K to $15K", "$15K to $20K", "$20K to $25K", "$25K to $30K", "$30K to $35K", "$35K to $40K", "$45K to $50K", "$50K to $55K", "$55K to $60K", "$60K to $65K", "$65K to $70K", "$70K to $75K", "More than $75K")),
-    political_af = factor(political_af, levels = c("Very conservative", "Somewhat conservative", "Somewhat liberal", "Very liberal", "I don't know", "Neither conservative nor liberal")),
-  ) %>% 
-  filter(
-    fossil_fuels_divest != ""
-  )
+responses <- fromJSON("../data/form_responses.json")
 
 responses_race <- responses %>% 
   separate(categories, sep = "; ", into = c("category1", "category2", "category3")) %>% 
@@ -30,6 +23,44 @@ responses_ec <- responses %>%
   group_by(extracurricular) %>% 
   filter(n() > 10) %>% 
   ungroup()
+
+responses_q <- responses %>%
+  select(starts_with("q_")) %>% 
+  filter(q_fossil_fuels_divest != "")
+```
+
+## All questions
+
+```{r}
+q_stats <- responses_q %>% 
+  gather(question, answer, starts_with("q_")) %>% 
+  count(question, answer) %>% 
+  group_by(question) %>% 
+  mutate(pct = n / sum(n)) %>% 
+  ungroup() %>% 
+  mutate(pct_label = percent(pct, accuracy = 2))
+q_stats %>% 
+  ggplot(aes(answer, pct, fill = answer)) +
+  geom_col() +
+  geom_text(aes(label = pct_label), vjust = 0) +
+  coord_flip() +
+  facet_grid(~ question) +
+  scale_x_discrete(limits = c("Neutral", "Strongly disagree", "Disagree", "Agree", "Strongly agree")) +
+  scale_fill_manual(values = c("#f8b5a6", "#a87b89", "#c0cccc", "#f8b5a6", "#a87b89")) +
+  theme(
+    panel.grid = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_blank(),
+    plot.background = element_blank(),
+    axis.title = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.y = element_blank(),
+    legend.position = "none",
+  )
+```
+
+```{r}
+ggsave('export.pdf')
 ```
 
 ## Affirmative action
@@ -49,7 +80,7 @@ responses_race %>%
 ## Free speech
 
 ```{r}
-responses_race %>% 
+responses %>% 
   ggplot(aes(free_speech)) +
   geom_bar() +
   coord_flip()
@@ -58,9 +89,10 @@ responses_race %>%
 ## Eliminate loans
 
 ```{r}
-responses_race %>% 
-  ggplot(aes(eliminate_loans)) +
-  geom_bar()
+responses %>% 
+  ggplot(aes(eliminate_loans, ..count.. / sum(..count..))) +
+  geom_bar() +
+  coord_flip()
 ```
 
 ## Fossil fuels
@@ -68,8 +100,9 @@ responses_race %>%
 ```{r}
 responses %>% 
   ggplot(aes(fossil_fuels_divest)) +
-  geom_bar()
-```
+  geom_bar() +
+  coord_flip()
+me```
 
 ## Manhattanville
 
