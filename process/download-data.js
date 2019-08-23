@@ -121,15 +121,6 @@ async function getResponses(auth) {
     return response;
   });
 
-  const WORTH_QUESTION = 'Why or why not? ';
-  let worthIts = '';
-  for (const obj of results['why worth it']) {
-    const response = obj[WORTH_QUESTION];
-    if (response === undefined)
-      break;
-    worthIts += '“' + response.trim() + '” ';
-  }
-
   /* Write out data */
 
   const writeFile = ({ filename, data }) =>
@@ -148,10 +139,5 @@ async function getResponses(auth) {
   writeFile({
     filename: '/data/form_responses.json',
     data: JSON.stringify(responses),
-  });
-
-  writeFile({
-    filename: '/data/worth-responses.txt',
-    data: worthIts,
   });
 }
