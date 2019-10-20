@@ -1,3 +1,7 @@
+## Survey 2023 in print
+
+![alt](https://raw.githubusercontent.com/spec-journalism/survey-2023-print/master/ai/map.jpg)
+
 **Class of 2023 survey analysis ([survey folder](https://drive.google.com/drive/u/1/folders/1avwqFzJQ-HHKaIu5pUTmomHKHmy48xD0)).**
 
 ## Setup
